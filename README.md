@@ -30,17 +30,76 @@ Expo SDK 57 · React Native 0.86 · TypeScript strict · Expo Router ·
 Supabase (Postgres, Auth, Storage, Edge Functions) · TanStack Query ·
 police Anton (OFL — Impact est propriétaire et n'est pas utilisée).
 
-## Démarrer
+## Tester sur un Mac (Apple silicon)
+
+Il faut Node 20+, puis une base : la stack Supabase locale (option A, tout en
+local) ou un projet hébergé gratuit (option B, indispensable pour tester depuis
+un vrai téléphone).
 
 ```bash
 npm install
-cp .env.example .env     # puis renseigner l'URL et la clé anon du projet Supabase
-npm start
 ```
 
-L'écran d'accueil actuel est l'écran de vérification du socle : il affiche le
-nombre de templates lus dans la base, ou le message de configuration si le
-`.env` n'est pas rempli.
+### Option A — stack Supabase locale (Docker)
+
+Docker Desktop (Apple silicon) ou OrbStack doit tourner.
+
+```bash
+npx supabase start     # affiche l'API URL et la clé anon
+npx supabase db reset  # applique les migrations puis supabase/seed.sql
+```
+
+Puis `cp .env.example .env` et y mettre l'URL locale et la clé `anon` affichée
+par `supabase start` :
+
+```
+EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<clé anon affichée par supabase start>
+```
+
+### Option B — projet Supabase hébergé
+
+1. Créer un projet sur supabase.com, récupérer sa référence.
+2. Appliquer le schéma et les données de développement :
+
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <ref>
+   npx supabase db push
+   ```
+
+   puis coller `supabase/seed.sql` dans le SQL editor du dashboard.
+3. Dashboard > Authentication > Sign In / Providers : activer les connexions
+   anonymes (voir la note plus bas ; elles ne servent que le temps de la phase 1).
+4. `.env` avec l'URL et la clé `anon` du dashboard (Project Settings > API).
+
+### Lancer l'app
+
+```bash
+npx expo start --clear
+```
+
+- **Navigateur** — le plus rapide : touche `w`.
+- **Simulateur iOS** — Xcode installé depuis l'App Store, puis touche `i`.
+- **iPhone** — Expo Go depuis l'App Store, scanner le QR code. Avec l'option A,
+  remplacer `127.0.0.1` par l'IP du Mac sur le réseau local
+  (`ipconfig getifaddr en0`), sinon le téléphone n'atteint pas la base.
+- **Android** — Android Studio pour l'émulateur, touche `a`.
+
+Expo Go suffit pour la phase 1. Les phases suivantes (Sign in with Apple,
+notifications push, export d'image) demanderont un *development build*
+(`npx expo run:ios` ou EAS Build).
+
+### Ce qu'on doit voir
+
+Le titre en police Anton, une carte verte « Connexion à Supabase établie. »,
+« 3 templates dans le catalogue » et les trois chemins d'images du seed. C'est
+le critère « Terminé quand » de la phase 1 : l'app démarre et lit `templates`.
+
+> **Session anonyme.** `templates` n'est lisible que par le rôle
+> `authenticated` (section 6 de la spéc). Tant que l'écran de connexion n'existe
+> pas, l'écran de fondation ouvre une session anonyme
+> (`lib/queries/session.ts`) — supprimée en même temps que lui à la phase 2.
 
 > Les variables `EXPO_PUBLIC_*` sont figées dans le bundle par Metro. Après les
 > avoir modifiées, relancer avec `npx expo start --clear`, sinon l'ancienne
@@ -51,11 +110,7 @@ nombre de templates lus dans la base, ou le message de configuration si le
 Tout le schéma est versionné dans `supabase/migrations`. Les règles métier sont
 appliquées **côté base** (contraintes, RLS, RPC), pas seulement côté client.
 
-```bash
-npx supabase start          # stack locale (Docker)
-npx supabase db reset       # applique les migrations puis supabase/seed.sql
-npm run db:types            # régénère lib/types/database.ts
-```
+Régénérer les types après toute migration : `npm run db:types`.
 
 Les images des templates ne sont pas versionnées : les déposer dans le bucket
 public `templates` aux chemins référencés par `supabase/seed.sql`.
@@ -85,9 +140,14 @@ utilisateurs : ce qu'un membre voit avant et après avoir posté, la fermeture
 d'un challenge, les likes, le blocage, le plafond de 30 membres.
 
 ```bash
-./scripts/test-db.sh                        # cluster PostgreSQL jetable, sans Docker
-DATABASE_URL=... ./scripts/test-db.sh       # contre une base qui a déjà les migrations
 npm run typecheck
+
+# contre la stack locale déjà démarrée (option A) :
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres ./scripts/test-db.sh
+
+# ou sur un cluster jetable, sans Docker (demande PostgreSQL installé :
+# brew install postgresql@16) :
+./scripts/test-db.sh
 ```
 
 Le script ne peut pas tourner en `root` (restriction d'`initdb`).
@@ -103,7 +163,7 @@ lib/
   supabase.ts         client Supabase (créé à la première utilisation)
   query-client.ts     TanStack Query et clés de cache
   strings.ts          tous les textes affichés, en français
-  queries/            hooks de données
+  queries/            hooks de données (session, templates)
   types/              types de la base et des templates
 scripts/test-db.sh    lanceur des tests SQL
 supabase/

@@ -12,6 +12,7 @@ export const queryClient = new QueryClient({
 
 /** Query keys, kept in one place so invalidation stays predictable. */
 export const queryKeys = {
+  session: ['session'] as const,
   templates: ['templates'] as const,
   myGroups: ['groups', 'mine'] as const,
   group: (groupId: string) => ['groups', groupId] as const,

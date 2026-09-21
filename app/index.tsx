@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '../lib/constants';
 import { isSupabaseConfigured } from '../lib/env';
+import { useFoundationSession } from '../lib/queries/session';
 import { useTemplates } from '../lib/queries/templates';
 import { strings } from '../lib/strings';
 import { theme } from '../lib/theme';
@@ -14,7 +15,8 @@ import { theme } from '../lib/theme';
  */
 export default function FoundationScreen() {
   const insets = useSafeAreaInsets();
-  const templates = useTemplates({ enabled: isSupabaseConfigured });
+  const session = useFoundationSession({ enabled: isSupabaseConfigured });
+  const templates = useTemplates({ enabled: session.isSuccess });
 
   return (
     <ScrollView
@@ -27,6 +29,20 @@ export default function FoundationScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{strings.setup.title}</Text>
           <Text style={styles.cardBody}>{strings.setup.missingEnv}</Text>
+        </View>
+      ) : session.isPending ? (
+        <View style={styles.card}>
+          <ActivityIndicator color={theme.colors.accent} />
+          <Text style={styles.cardBody}>{strings.setup.signingIn}</Text>
+        </View>
+      ) : session.isError ? (
+        <View style={styles.card}>
+          <Text style={[styles.cardTitle, styles.error]}>{strings.setup.signInFailed}</Text>
+          <Text style={styles.cardBody}>{session.error.message}</Text>
+          <Text style={styles.cardBody}>{strings.setup.signInHint}</Text>
+          <Pressable style={styles.button} onPress={() => void session.refetch()}>
+            <Text style={styles.buttonLabel}>{strings.common.retry}</Text>
+          </Pressable>
         </View>
       ) : templates.isPending ? (
         <View style={styles.card}>
