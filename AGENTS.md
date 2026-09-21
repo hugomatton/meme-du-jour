@@ -2,6 +2,10 @@
 
 Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
 
+La spécification du MVP est dans `docs/spec-mvp.md` : elle fait foi pour les
+règles métier (R1 à R12), le modèle de données, les écrans et le découpage en
+phases. `README.md` dit où en est chaque phase.
+
 # Project conventions
 
 - Schema changes go in a **new** migration under `supabase/migrations`; never

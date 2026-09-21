@@ -7,8 +7,8 @@ ne découvre ceux des autres qu'après avoir posté.
 > Le nom est provisoire. Il est défini une seule fois dans `app.constants.js`
 > (`APP_NAME`), que lisent à la fois la configuration Expo et l'application.
 
-La spécification complète du MVP fait foi pour les règles métier (R1 à R12) et
-le découpage en phases.
+La spécification complète du MVP est dans [`docs/spec-mvp.md`](docs/spec-mvp.md) :
+elle fait foi pour les règles métier (R1 à R12) et le découpage en phases.
 
 ## État
 
@@ -165,6 +165,7 @@ lib/
   strings.ts          tous les textes affichés, en français
   queries/            hooks de données (session, templates)
   types/              types de la base et des templates
+docs/spec-mvp.md      spécification du MVP (source de vérité)
 scripts/test-db.sh    lanceur des tests SQL
 supabase/
   migrations/         schéma versionné
